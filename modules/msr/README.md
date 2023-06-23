@@ -1,0 +1,1 @@
+# Module used to create the instances where MSR will be installed on

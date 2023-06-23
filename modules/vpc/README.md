@@ -1,0 +1,1 @@
+# Module used to create the VPC and its resources

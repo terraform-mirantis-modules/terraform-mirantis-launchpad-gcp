@@ -1,0 +1,9 @@
+.DS_Store
+
+plan
+ssh_keys/
+.terraform/
+*terraform.tfstate*
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl

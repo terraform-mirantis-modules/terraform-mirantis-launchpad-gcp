@@ -1,0 +1,1 @@
+# Module used for the creation of common resources
