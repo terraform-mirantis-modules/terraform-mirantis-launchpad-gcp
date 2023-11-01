@@ -10,17 +10,15 @@ data "google_compute_zones" "available" {
 }
 
 resource "random_string" "random" {
-  length      = 6
-  special     = false
-  lower       = true
-  min_upper   = 2
-  min_numeric = 2
+  length  = 7
+  special = false
+  numeric = false
 }
 
 # If the zone is not specified, use the first zone from the available zones
 locals {
   zone         = var.gcp_zone != "" ? var.gcp_zone : data.google_compute_zones.available.names[0]
-  cluster_name = var.cluster_name == "" ? random_string.random.result : var.cluster_name
+  cluster_name = var.cluster_name == "" ? lower(random_string.random.result) : var.cluster_name
 }
 
 module "vpc" {
