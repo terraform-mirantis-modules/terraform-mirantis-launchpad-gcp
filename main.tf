@@ -51,6 +51,7 @@ module "managers" {
 }
 
 module "msrs" {
+  count           = var.msr_count > 0 ? 1 : 0
   source          = "./modules/msr"
   msr_count       = var.msr_count
   gcp_region      = var.gcp_region
@@ -63,6 +64,7 @@ module "msrs" {
 }
 
 module "workers" {
+  count                 = var.worker_count > 0 ? 1 : 0
   source                = "./modules/worker"
   worker_count          = var.worker_count
   gcp_region            = var.gcp_region
@@ -77,6 +79,7 @@ module "workers" {
 }
 
 module "windows_workers" {
+  count                 = var.windows_worker_count > 0 ? 1 : 0
   source                = "./modules/windows_worker"
   worker_count          = var.windows_worker_count
   gcp_zone              = local.zone
@@ -104,8 +107,8 @@ locals {
     }
   ]
 
-  msrs = [
-    for host in module.msrs.machines : {
+  msrs = var.msr_count > 0 ? [
+    for host in module.msrs[0].machines : {
       ssh = {
         address = host.network_interface.0.access_config.0.nat_ip
         user    = "ubuntu"
@@ -114,10 +117,10 @@ locals {
       role             = host.metadata["role"]
       privateInterface = "ens4"
     }
-  ]
+  ] : []
 
-  workers = [
-    for host in module.workers.machines : {
+  workers = var.worker_count > 0 ? [
+    for host in module.workers[0].machines : {
       ssh = {
         address = host.network_interface.0.access_config.0.nat_ip
         user    = "ubuntu"
@@ -126,10 +129,10 @@ locals {
       role             = host.metadata["role"]
       privateInterface = "ens4"
     }
-  ]
+  ] : []
 
-  windows_workers = [
-    for host in module.windows_workers.machines : {
+  windows_workers = var.windows_worker_count > 0 ? [
+    for host in module.windows_workers[0].machines : {
       winRM = {
         address  = host.network_interface.0.access_config.0.nat_ip
         user     = var.windows_user
@@ -140,7 +143,7 @@ locals {
       role             = host.metadata["role"]
       privateInterface = "Ethernet"
     }
-  ]
+  ] : []
 
   mke_launchpad_tmpl = {
     apiVersion = "launchpad.mirantis.com/mke/v1.4"
@@ -163,6 +166,8 @@ locals {
     }
   }
 
+  msr_install_flags = var.msr_count > 0 ? concat(["--ucp-insecure-tls"], ["--dtr-external-url ${module.msrs[0].lb_public_ip_address}"]) : []
+
   msr_launchpad_tmpl = {
     apiVersion = "launchpad.mirantis.com/mke/v1.4"
     kind       = "mke+msr"
@@ -178,10 +183,7 @@ locals {
       }
       msr = {
         version = var.msr_version
-        installFlags : [
-          "--ucp-insecure-tls",
-          "--dtr-external-url ${module.msrs.lb_public_ip_address}",
-        ]
+        installFlags : local.msr_install_flags
       }
       hosts = concat(local.managers, local.msrs, local.workers, local.windows_workers)
     }

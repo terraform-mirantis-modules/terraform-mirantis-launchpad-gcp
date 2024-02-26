@@ -15,5 +15,5 @@ output "mke_lb" {
 }
 
 output "msr_lb" {
-  value = module.msrs.lb_public_ip_address
+  value = var.msr_count > 0 ? module.msrs[0].lb_public_ip_address : null
 }
